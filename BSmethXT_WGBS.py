@@ -83,7 +83,7 @@ def filt_mCT(INfile,refG,mextDir,my_session,logobject):
     read_root=re.sub('.CG.call.gz','',os.path.basename(INfile))
     pozF=re.sub('.fa','.poz.gz',refG)
     gz_cmd='gzip -dc '+ INfile + ' > '+ re.sub('.gz','',INfile)
-    filt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.01/WGBSpipe.mCT.filt.R ' + mextDir + ' ' + re.sub('.gz','',INfile) + ' ' + pozF
+    filt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02/WGBSpipe.mCT.filt.R ' + mextDir + ' ' + re.sub('.gz','',INfile) + ' ' + pozF
     clean_cmd='rm -v ' + re.sub('.gz','',INfile)
     cmd_all=';'.join([gz_cmd,filt_cmd,clean_cmd])
     logobject.info(cmd_all)
@@ -142,7 +142,7 @@ def methXT_POM(INfile,QCdir,OUTpfx,refG,POMpath,mextDir,mbias_ignore,nthreads,my
    
 def filt_POM(INfile,bedpath,mextDir,my_session,logobject,blackListF=None):
     read_root=re.sub('_CpG.bedGraph','',os.path.basename(INfile))
-    Rfilt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.01/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
+    Rfilt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
     if blackListF is None:
         mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','_CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','_CpG.filt2.bed',INfile)
         cmd_all=';'.join([Rfilt_cmd,mv_cmd])
@@ -319,7 +319,7 @@ def BisSNP_vcf2bed(INfile,OUTfile,mextDir,my_session,logobject):
 
 def BisSNP_CpGfilt(INfile,mextDir,my_session,logobject):
     read_root=re.sub('.CpG.filt.bed','',os.path.basename(INfile))
-    filt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.01/WGBSpipe.BisSNP.filt.R ' + mextDir + ' ' + INfile 
+    filt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02/WGBSpipe.BisSNP.filt.R ' + mextDir + ' ' + INfile 
     logobject.info(filt_cmd)
     with open(os.path.join(mextDir,"logs","%s.CpG_filt.out" % read_root),'w') as stdoutF, open(os.path.join(mextDir,"logs","%s.CpG_filt.err" % read_root),'w') as stderrF:
         try:
