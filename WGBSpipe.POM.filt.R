@@ -42,7 +42,7 @@ dm$ms<-paste(dm$chr,dm$start,sep="_")
 
 ## write output files
 message("writing output files ..", appendLF=FALSE)
-write.table(dm,sep="\t", row.names=FALSE, quote=FALSE, file=paste0(wdir, "/", gsub("_CpG.bedGraph","_CpG.filt.bed",mshort) ))
+write.table(dm,sep="\t", row.names=FALSE, quote=FALSE, file=paste0(wdir, "/", gsub("_CpG.bedGraph",".CpG.filt.bed",mshort) ))
 
 message("done all")
 

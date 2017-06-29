@@ -144,12 +144,11 @@ def filt_POM(INfile,bedpath,mextDir,my_session,logobject,blackListF=None):
     read_root=re.sub('_CpG.bedGraph','',os.path.basename(INfile))
     Rfilt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
     if blackListF is None:
-        mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','_CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','_CpG.filt2.bed',INfile)
+        mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile)
         cmd_all=';'.join([Rfilt_cmd,mv_cmd])
     else:
-        SNP_filt=os.path.join(bedpath,'bedtools') + ' intersect -v -a' + re.sub('_CpG.bedGraph','_CpG.filt.bed',INfile) + ' -b ' + blackListF + ' > ' + re.sub('_CpG.bedGraph','_CpG.filt2.bed',INfile)
-        cmd_all=';'.join([Rfilt_cmd,SNP_filt])
-    logobject.info(cmd_all)
+        SNP_filt=os.path.join(bedpath,'bedtools') + ' intersect -v -a' + re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' -b ' + blackListF + ' > ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile)
+        cmd_all=';'.join([Rfilt_cmd,SNP_filt])    logobject.info(cmd_all)
     with open(os.path.join(mextDir,"logs","%s.MetDack_filt.out" % read_root),'w') as stdoutF, open(os.path.join(mextDir,"logs","%s.MetDack_filt.err" % read_root),'w') as stderrF:
         try:
             stdout_res, stderr_res  = run_job(cmd_str       = cmd_all,

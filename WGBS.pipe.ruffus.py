@@ -698,7 +698,7 @@ elif ( args.methEXT=='MethylDackel' and not args.methtabdir ):
             oos=re.sub('_CpG.bedGraph','',oo)
             from BSmethXT_WGBS import methXT_POM
             methXT_POM(ii,metout,oos,refG,POMpath,mextout,args.mbias_ignore,args.nthreads,mySession,logger)        
-    @transform(methyl_extract,suffix('_CpG.bedGraph'),'_CpG.filt2.bed',output_dir=mextout) 
+    @transform(methyl_extract,suffix('_CpG.bedGraph'),'.CpG.filt2.bed',output_dir=mextout) 
     def CpG_filt(input_file,output_file):
         ii = input_file
         oo = output_file
@@ -706,7 +706,7 @@ elif ( args.methEXT=='MethylDackel' and not args.methtabdir ):
         filt_POM(ii,bedpath,mextout,mySession,logger,args.blackList)
         
 elif ( args.methEXT=='MethylDackel' and  args.methtabdir ): 
-    @transform(INfiles,suffix('_CpG.bedGraph'),'_CpG.filt2.bed',output_dir=mextout) 
+    @transform(INfiles,suffix('_CpG.bedGraph'),'.CpG.filt2.bed',output_dir=mextout) 
     def CpG_filt(input_file,output_file):
         ii = input_file
         oo = output_file
