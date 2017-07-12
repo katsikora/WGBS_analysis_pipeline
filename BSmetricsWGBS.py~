@@ -27,7 +27,7 @@ def BS_doc_XT(INfile,OUTfileList,bedFiles,auxdir,refG,GATKpath,metDir,my_session
     read_root=re.sub('.bam','',os.path.basename(INfile))
     OUTlist2=OUTfileList[2:]
     WG_mean_cmd='java -Xmx50g -Djava.io.tmpdir=/data/extended -jar '+ os.path.join(GATKpath,'GenomeAnalysisTK.jar')+' -R '+ refG + ' -T DepthOfCoverage -o ' + str(OUTfileList[0]) + ' -I ' + INfile + ' -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample '
-    CG_cmd='java -Xmx50g -Djava.io.tmpdir=/data/extended -jar '+ os.path.join(GATKpath,'GenomeAnalysisTK.jar')+' -R '+ refG + ' -T DepthOfCoverage -o ' + str(OUTfileList[1]) + ' -I ' + INfile + ' -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -omitIntervals -mmq 10 --partitionType sample -L ' + os.path.join(auxdir,re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG)))
+    CG_cmd='java -Xmx50g -Djava.io.tmpdir=/data/extended -jar '+ os.path.join(GATKpath,'GenomeAnalysisTK.jar')+' -R '+ refG + ' -T DepthOfCoverage -o ' + str(OUTfileList[1]) + ' -I ' + INfile + ' -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -omitIntervals -mmq 10 --partitionType sample -L ' + os.path.join(os.path.dirname(refG),re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG)))
     cmd_Xi=['java -Xmx50g -Djava.io.tmpdir=/data/extended -jar '+ os.path.join(GATKpath,'GenomeAnalysisTK.jar')+' -R '+ refG + ' -T DepthOfCoverage -o ' + oi + ' -I ' + INfile + ' -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -omitIntervals -mmq 10 --partitionType sample -L ' + bi for oi,bi in zip(OUTlist2,bedFiles)]
     cmd_all=cmd_Xi
     cmd_all[0:0]=[CG_cmd]

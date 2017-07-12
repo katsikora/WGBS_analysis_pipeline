@@ -111,14 +111,14 @@ def methXT_POM(INfile,QCdir,OUTpfx,refG,POMpath,mextDir,mbias_ignore,nthreads,my
     read_root=re.sub('.bam','',os.path.basename(INfile)) 
     if len(mbias_ignore) < 3:
         m_ignore=','.join([mbias_ignore]*4)
-        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 --nOT ' + m_ignore + ' --nOB  ' + m_ignore + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads) + ';sleep 300'
+        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 --nOT ' + m_ignore + ' --nOB  ' + m_ignore + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads) + ';wait 300'
     elif mbias_ignore=="auto":
         with open(os.path.join(QCdir,"logs",read_root)+'.mbias.err', 'r') as f:
             first_line = f.readline()
         mbias_auto=re.sub('Suggested inclusion options: ','',first_line).strip('\n')
-        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 ' + mbias_auto + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads)  + ';sleep 300'
+        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 ' + mbias_auto + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads)  + ';wait 300'
     elif len(mbias_ignore) > 4:
-        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 ' + mbias_ignore + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads)  + ';sleep 300'
+        POM_cmd=os.path.join(POMpath,'MethylDackel') + ' extract ' + refG + ' ' + INfile + ' -o ' + OUTpfx + ' -q 10 -p 20 ' + mbias_ignore + ' --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ '+str(nthreads)  + ';wait 300'
     logobject.info(POM_cmd)
     with open(os.path.join(mextDir,"logs","%s.MetDack_extract.out" % read_root),'w') as stdoutF, open(os.path.join(mextDir,"logs","%s.MetDack_extract.err" % read_root),'w') as stderrF:
         try:
@@ -144,10 +144,10 @@ def filt_POM(INfile,bedpath,mextDir,my_session,logobject,blackListF=None):
     read_root=re.sub('_CpG.bedGraph','',os.path.basename(INfile))
     Rfilt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
     if blackListF is None:
-        mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile) + ';sleep 300'
+        mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile) + ';wait 300'
         cmd_all=';'.join([Rfilt_cmd,mv_cmd])
     else:
-        SNP_filt=os.path.join(bedpath,'bedtools') + ' intersect -v -a' + re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' -b ' + blackListF + ' > ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile) + ';sleep 300'
+        SNP_filt=os.path.join(bedpath,'bedtools') + ' intersect -v -a' + re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' -b ' + blackListF + ' > ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile) + ';wait 300'
         cmd_all=';'.join([Rfilt_cmd,SNP_filt])
     logobject.info(cmd_all)
     with open(os.path.join(mextDir,"logs","%s.MetDack_filt.out" % read_root),'w') as stdoutF, open(os.path.join(mextDir,"logs","%s.MetDack_filt.err" % read_root),'w') as stderrF:

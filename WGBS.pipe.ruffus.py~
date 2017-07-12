@@ -788,7 +788,7 @@ if (args.sampleInfo and args.stats=='limma'):
         os.makedirs(CpGstat_out)
         os.makedirs(os.path.join(CpGstat_out,'logs'))
     os.chdir(CpGstat_out)
-    @merge(input=CpG_filt,output=[os.path.join(CpGstat_out,'singleCpG.RData'),os.path.join(CpGstat_out,'limdat.LG.RData'),os.path.join(CpGstat_out,'metilene.IN.txt')])
+    @merge(input=CpG_filt,output=['singleCpG.RData','limdat.LG.RData','metilene.IN.txt'])
     def CpG_stats(input_files,output_file):
         ii = input_files[0]
         oo = output_file
@@ -800,7 +800,7 @@ elif (args.sampleInfo and args.stats=='DSS'):
         os.makedirs(CpGstat_out)
         os.makedirs(os.path.join(CpGstat_out,'logs'))
     os.chdir(CpGstat_out)
-    @merge(input=CpG_filt,output=[os.path.join(CpGstat_out,'singleCpG.RData'),os.path.join(CpGstat_out,'DSS.res.RData')])
+    @merge(input=CpG_filt,output=[ps.path.join(CpGstat_out,'singleCpG.RData'),os.path.join(CpGstat_out,'DSS.res.RData')])
     def CpG_stats(input_files,output_file):
         ii = input_files[0]
         oo = output_file

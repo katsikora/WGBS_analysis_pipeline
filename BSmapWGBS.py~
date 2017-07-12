@@ -184,7 +184,7 @@ def BS_sort_bam(INfile,sampath,bamoutDir,nthreads,my_session,logobject):
     return
     
 def BS_index_bam(INfile,sampath,bamoutDir,my_session,logobject):
-    cmd_bamInd=os.path.join(sampath,'samtools') + ' index ' + INfile  + ';sleep 300'
+    cmd_bamInd=os.path.join(sampath,'samtools') + ' index ' + INfile  + ';wait 300'
     read_root=re.sub('.bam','',os.path.basename(INfile))
     logobject.info(cmd_bamInd)
     with open(os.path.join(bamoutDir,"logs","%s.bamIndex.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.bamIndex.err.log" % read_root),'w') as stderrF:
