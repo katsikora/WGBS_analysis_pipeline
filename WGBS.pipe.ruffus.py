@@ -43,6 +43,9 @@ parser.add_argument("-vb", "--verbose", dest="verbose", action="store_true", hel
 parser.add_argument("-bs", "--batchSize", dest="bsize", action="store",metavar="INT",type=int,default=10, help="number of samples to process in parallel")
 parser.add_argument("-nt", "--numThr", dest="nthreads", action="store",metavar="INT",type=int,default=8, help="number of threads to use per sample")
 parser.add_argument("-tR", "--trimReads", dest="trimReads", action="store_true", help="adapter-trim and hardclip the reads")
+parser.add_argument("--nextera", action="store_true", help="Trim Nextera adapters, rather than the default TruSeq adapters. Requires --trimReads")
+parser.add_argument("--trimThreshold", default=10, type=int, help="If --trimReads is specified, this sets the phred score threshold.")
+parser.add_argument("--trimOtherArgs", default="", help="Other arguments you would like passed to cutadapt.")
 parser.add_argument("-cr", "--convRef", dest="convRef", action="store_true", help="BS-convert reference genome")
 parser.add_argument('--aligner', choices=['methylCtools', 'Bismark', 'bwaMeth'],dest="aligner",action="store",default="bwaMeth",help="mapping software to use")
 parser.add_argument('--extractor', choices=['methylCtools', 'MethylDackel', 'BisSNP'],dest="methEXT",action="store",default="MethylDackel",help="methylation extraction software to use")
@@ -153,13 +156,14 @@ logger.debug('Convert genome? ' + str(args.convRef))
 
 ##################PATHS TO EXECUTABLES###############################################################
 FQCpath='/package/FastQC-0.11.3'
-cutpath='/package/cutadapt-1.9.1/bin'
+cutpath='/package/anaconda3/envs/cutadapt-1.15/bin'
 mCTpath='/data/manke/repository/scripts/DNA_methylation/methylCtools'
 tabpath='/package/tabix-1.2.1'
-bwapath='/package/bwa-0.7.4/bin'
+bwapath='/package/anaconda3/envs/bwa-0.7.17/bin'
 bismpath='/data/manke/repository/scripts/DNA_methylation/Bismark-master'
 BTpath='/package/bowtie2-2.2.8/'
-bmethpath='/data/manke/repository/scripts/DNA_methylation/bwa-meth-master_2016'
+#bmethpath='module load bwameth && /package/anaconda3/envs/bwameth-0.2.0/bin'
+bmethpath='module load bwameth; '
 sampath='/package/samtools-1.3/bin'
 Picpath='/package/picard-tools-1.136'
 GATKpath='/package/GenomeAnalysisTK-3.5'
@@ -172,66 +176,56 @@ Rpath='/package/R-3.3.1/bin'
 ######################################################################################################
 
 #add folder with custom modules to path            
-sys.path.append('/data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v0.02')
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 #############################PIPELINE#################################################################################
 #TRIM READS############################################################################################################
-if args.trimReads:
-    fqcout=os.path.join(wdir,'fastqc_cut')
-    cutout=os.path.join(wdir,'reads_cut')
-    #setup shared logging 
-    log_args={}
-    log_args["file_name"] = os.path.join(fqcout,"LOG")
-    log_args["formatter"] = "%(asctime)s - %(name)s - %(levelname)6s - %(message)s"
-    log_args["delay"]     = True
-    log_args["level"]     = logging.DEBUG
-    (shared_logger,logging_mutex) = make_shared_logger_and_proxy (setup_std_shared_logger,
-                                               "shared_logger",
-                                               log_args)  
-    if args.fqcdir:    
-        fqcdir=args.fqcdir
-        fqcL=[ os.path.join(fqcdir,z ) for z in os.listdir(fqcdir) ]
-        zipR1=filter(lambda x:'_R1_fastqc.zip' in x, fqcL)
-        zipR1.sort()
-        zipR2=filter(lambda x:'_R2_fastqc.zip' in x, fqcL)
-        zipR2.sort()
-        zipL=list(zip(zipR1,zipR2))
-        zipL2=[ list(z) for z in zipL ]
-        os.chdir(fqcdir)
-        #from BSprecut import calc_cutThd
-        @mkdir(fqcout)
-        @transform(zipL2,suffix('_R1_fastqc.zip'),'.R12.ct.txt',output_dir=fqcout)
-        def get_cutThd(input_files,output_file):
-            ii1 = input_files[0]
-            ii2 = input_files[1]
-            from BSprecut import calc_cutThd
-            with open(output_file, "w") as oo:
-                cutThdRes=calc_cutThd([ii1,ii2],args.fqcdir,fqcout,shared_logger,logging_mutex)
-                oo.write('\n'.join('%s\t%s\n' % x for x in cutThdRes))
-                    
-        
-    os.chdir(readdir)
+#if args.trimReads:
+#    fqcout=os.path.join(wdir,'fastqc_cut')
+#    cutout=os.path.join(wdir,'reads_cut')
+#    #setup shared logging 
+#    log_args={}
+#    log_args["file_name"] = os.path.join(fqcout,"LOG")
+#    log_args["formatter"] = "%(asctime)s - %(name)s - %(levelname)6s - %(message)s"
+#    log_args["delay"]     = True
+#    log_args["level"]     = logging.DEBUG
+#    (shared_logger,logging_mutex) = make_shared_logger_and_proxy (setup_std_shared_logger,
+#                                               "shared_logger",
+#                                               log_args)  
+#    if args.fqcdir:    
+#        fqcdir=args.fqcdir
+#        fqcL=[ os.path.join(fqcdir,z ) for z in os.listdir(fqcdir) ]
+#        zipR1=filter(lambda x:'_R1_fastqc.zip' in x, fqcL)
+#        zipR1.sort()
+#        zipR2=filter(lambda x:'_R2_fastqc.zip' in x, fqcL)
+#        zipR2.sort()
+#        zipL=list(zip(zipR1,zipR2))
+#        zipL2=[ list(z) for z in zipL ]
+#        os.chdir(fqcdir)
+#        #from BSprecut import calc_cutThd
+#        @mkdir(fqcout)
+#        @transform(zipL2,suffix('_R1_fastqc.zip'),'.R12.ct.txt',output_dir=fqcout)
+#        def get_cutThd(input_files,output_file):
+#            ii1 = input_files[0]
+#            ii2 = input_files[1]
+#            from BSprecut import calc_cutThd
+#            with open(output_file, "w") as oo:
+#                cutThdRes=calc_cutThd([ii1,ii2],args.fqcdir,fqcout,shared_logger,logging_mutex)
+#                oo.write('\n'.join('%s\t%s\n' % x for x in cutThdRes))
+#                    
+#        
+#    os.chdir(readdir)
     
 if args.trimReads:
-    @follows(get_cutThd)
     @mkdir(cutout,os.path.join(cutout,'logs'))
     @transform(input=INfiles,filter=suffix('_R1.fastq.gz'),output=['_R1.fastq.gz','_R2.fastq.gz'],output_dir=cutout) 
     def trim_reads(input_files,output_files):
         ii1 = input_files[0]
         ii2 = input_files[1]
-        ii3 = os.path.join(fqcout,re.sub('_R1.fastq.gz','.R12.ct.txt',os.path.basename(ii1)))
-        print(ii3)
         oo1 = output_files[0]
         oo2 = output_files[1]
-        #prepare threshold values
-        ctfile = open(ii3)
-        for line in ctfile:
-            fields = line.strip().split()
-            ct1=fields[0]
-            ct2=fields[1]
-    
         from BSprecut import cut_reads
-        cut_reads(ii1,ii2,oo1,oo2,ct1,ct2,cutpath,mySession,cutout,logger)
+        cut_reads(ii1,ii2,oo1,oo2,cutpath,mySession,cutout,logger, args)
     @mkdir(fqcout,os.path.join(fqcout,'logs'))
     @transform(input=trim_reads,filter=suffix('_R1.fastq.gz'),output=['_R1.zip','_R1.html','_R2.zip','_R2.html'],output_dir=fqcout)
     def postTrim_fastqc(input_files,output_files):
@@ -548,7 +542,7 @@ elif ( args.bamdir and not args.intList and not args.methtabdir ):
         from BSmetricsWGBS import BS_doc
         BS_doc(ii,oos2,refG,auxdir,GATKpath,metout,mySession,logger)        
     
-#conversion rate: currently from fastq, implement phiX control!
+#conversion rate: currently from fastq, implement phiX/lambda control!
 if ( args.trimReads and not args.methtabdir and not args.bamdir ):
     @mkdir(metout,os.path.join(metout,'logs'))
     @transform(trim_reads,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
@@ -560,7 +554,7 @@ if ( args.trimReads and not args.methtabdir and not args.bamdir ):
         BS_conv_rate(ii1sub,oo,metout,mySession,logger)
 elif ( not args.trimReads and not args.methtabdir and not args.bamdir ): 
     @mkdir(metout,os.path.join(metout,'logs'))
-    @transform(IN_files,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
+    @transform(INfiles,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
     def conv_rate(input_files,output_file):
         ii1=input_files[0][0]
         ii1sub=re.sub('_R1.fastq.gz','',ii1)

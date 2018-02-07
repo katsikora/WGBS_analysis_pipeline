@@ -67,19 +67,30 @@ def calc_cutThd (zipL,fqin,fqout,shared_logger,logging_mutex):
     return cutThdL
 
 
-def cut_reads(INfile1,INfile2,OUTfile1,OUTfile2,cutThdR1,cutThdR2,cutpath,my_session,cutout,logobject):
-    read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile1))
-    bshcmd=os.path.join(cutpath,'cutadapt') + ' -a AGATCGGAAGAGC -A AGATCGGAAGAGC --minimum-length 30  -n 5 -u ' + cutThdR1 + ' -U ' + cutThdR2 + ' -o ' + OUTfile1 + ' -p ' + OUTfile2 + ' ' + INfile1 + ' ' + INfile2
+def cut_reads(INfile1,INfile2,OUTfile1,OUTfile2,cutpath,my_session,cutout,logobject, args):
+    read_root = os.path.basename(INfile1)[:-12]
+    adapterSeq = "AGATCGGAAGAGC"
+    if args.nextera:
+        adapterSeq = "CTGTCTCTTATA"
+    bshcmd = "{} -a {} -A {} -q {} -m 30 -j {} {} -o {} -p {} {} {}".format(os.path.join(cutpath, 'cutadapt'),
+                                                                            adapterSeq,
+                                                                            adapterSeq,
+                                                                            args.trimThreshold,
+                                                                            args.trimOtherArgs,
+                                                                            args.nthreads,
+                                                                            OUTfile1,
+                                                                            OUTfile2,
+                                                                            INfile1,
+                                                                            INfile2)
     with open(os.path.join(cutout,"logs","%s.trim_reads.out" % read_root),'w+') as stdoutF, open(os.path.join(cutout,"logs","%s.trim_reads.err" % read_root),'w+') as stderrF:
         try:
-        
-            stdout_res, stderr_res  = run_job(cmd_str           = bshcmd,
-                                      job_name          = 'cut_reads',
-                                      logger            = logobject,
-                                      drmaa_session     = my_session,
-                                      run_locally       = False,
-                                      working_directory = os.getcwd(),
-                                      job_other_options = '-p bioinfo')
+            stdout_res, stderr_res = run_job(cmd_str = bshcmd,
+                                             job_name = 'cut_reads',
+                                             logger = logobject,
+                                             drmaa_session = my_session,
+                                             run_locally = False,
+                                             working_directory = os.getcwd(),
+                                             job_other_options = '-p bioinfo --mincpus={}'.format(nThreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
