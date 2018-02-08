@@ -135,17 +135,21 @@ def Bism_map_reads(INfile1,INfile2,bismpath,bamoutDir,refpathBS,nthreads,my_sess
 
 def bMeth_map_reads(INfile1,INfile2,outBam,bmethpath,sampath,bamoutDir,refpathBS,nthreads,my_session,logobject):
     read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile1))
-    mapcmd='python ' + os.path.join(bmethpath,'bwameth.py') + ' --threads ' + str(nthreads)  + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 6G -@ ' + str(nthreads)  + ' -o ' + outBam
+    # There no point in using more than a few sort threads, it just uses excess memory
+    sortThreads = nthreads
+    if nthreads > 4:
+        sortThreads = 4
+    mapcmd=bmethpath + ' bwameth.py --threads ' + str(nthreads)  + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 3G -@ ' + str(sortThreads)  + ' -o ' + outBam
     logobject.info(mapcmd)
     with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
         try:
-            stdout_res, stderr_res  = run_job(cmd_str       = mapcmd,
-                                          job_name          = 'BSmap',
-                                          logger            = logobject,
-                                          drmaa_session     = my_session,
-                                          run_locally       = False,
-                                          working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
+            stdout_res, stderr_res = run_job(cmd_str = mapcmd,
+                                             job_name = 'BSmap',
+                                             logger = logobject,
+                                             drmaa_session = my_session,
+                                             run_locally = False,
+                                             working_directory = os.getcwd(),
+                                             job_other_options = '-p bioinfo --mincpus='+str(nthreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
@@ -260,5 +264,3 @@ def BS_add_RGi(INfile,OUTfile,Picpath,bamoutDir,my_session,logobject):
             logobject.info('Adding read group info complete')
             zeroFile(INfile)
     return
-
-

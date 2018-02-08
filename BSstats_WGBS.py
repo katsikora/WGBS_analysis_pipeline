@@ -24,7 +24,7 @@ def single_CpG_limma(ii,sampleInfo,outdir,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo')
+                                          job_other_options = '-p bioinfo --mem-per-cpu 10000')
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
