@@ -66,7 +66,7 @@ def methXT_mCT(INfile,QCdir,OUTfile,refG,mCTpath,tabpath,mextDir,mbias_ignore,my
 
 def mCT_prep_poz(refG,mCTpath,tabpath,outdir,pozF,logobject):
     logobject.info('Preparing an index of CG positions')
-    cmd_fapos=[os.path.join(mCTpath,'methylCtools') + ' fapos ' + refpath + ' - | ' + os.path.join(tabpath,'bgzip') + ' > ' + pozF]
+    cmd_fapos=os.path.join(mCTpath,'methylCtools') + ' fapos ' + refG + ' - | ' + os.path.join(tabpath,'bgzip') + ' > ' + pozF
     prep_poz='gzip -dc ' + pozF + '| grep \'+\'  | awk \'{print $1, $2, $2+1, $3, $4, $5}\' - | tr " " "\t" > ' + re.sub('gz','P.txt',pozF) + ' ; gzip -dc ' + pozF + ' | grep \'-\'  | awk \'{print $1, $2, $2+1, $3, $4, $5}\' - | tr " " "\t" > ' + re.sub('gz','M.txt',pozF)
     cmd_all=';'.join([cmd_fapos,prep_poz])
     logobject.info(cmd_all)

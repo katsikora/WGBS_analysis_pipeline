@@ -36,9 +36,10 @@ def calc_cutThd (zipL,fqin,fqout,shared_logger,logging_mutex):
             subprocess.check_output(['csplit', '-z' , fqtxt , '/>>/','{*}'])
             with open(fqtxt,'r') as file:
                 line=file.readline().strip()
-            if '0.11.2' in line:    
+            if '0.11.2' in line or '0.11.6' in line:
                 NTconTab=pandas.read_table(os.path.join(os.getcwd(), 'xx09'), sep='\t',skiprows=1,header=0,names=['Index','G','A','T','C'],dtype={'Index':'object','G':'float64','A':'float64','T':'float64','C':'float64'},engine='c')
             else:
+                NTconTab=pandas.read_table(os.path.join(os.getcwd(), 'xx09'), sep='\t',skiprows=1,header=0,names=['Index','G','A','T','C'],dtype={'Index':'object','G':'float64','A':'float64','T':'float64','C':'float64'},engine='c')
                 shared_logger.warning('Check fastqc version')
             difftab=NTconTab.set_index('Index').diff(periods=-1)
             difftabA=difftab.abs()

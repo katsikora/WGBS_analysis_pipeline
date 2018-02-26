@@ -60,7 +60,8 @@ def methCT_map_reads(INfile,bwapath,sampath,bamoutDir,refpathBS,nthreads,my_sess
     PL=re.sub('@','',file_content).split(":")[0]
     PU=re.sub('@','',file_content).split(":")[2]
     RG='@RG"\t"ID:1"\t"SM:'+read_root+'"\t"LB:'+read_root+'"\t"PL:'+PL+'"\t"PU:'+PU
-    mapcmd= os.path.join(bwapath,'bwa') + ' mem -M -p -t ' + str(nthreads) + ' -R ' + RG + ' ' + refpathBS + ' ' + INfile + ' | ' + os.path.join(sampath,'samtools') + ' view -Sb - > ' + outBam
+    ##-M option is interfering with some positional arguments and the index cannot be located
+    mapcmd= os.path.join(bwapath,'bwa') + ' mem  -p -t ' + str(nthreads) + ' -R ' + RG + ' ' + refpathBS + ' ' + INfile + ' | ' + os.path.join(sampath,'samtools') + ' view -Sb - > ' + outBam
     logobject.info(mapcmd)
     with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
         try:
@@ -80,7 +81,7 @@ def methCT_map_reads(INfile,bwapath,sampath,bamoutDir,refpathBS,nthreads,my_sess
             raise
         else:
             logobject.info('Mapping complete')
-            zeroFile(INfile)
+            #zeroFile(INfile)
     return
 
 def methCT_bcov_bam(INfile,mCTpath,sampath,bamoutDir,nthreads,my_session,logobject):
