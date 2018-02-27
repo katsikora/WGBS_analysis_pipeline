@@ -70,7 +70,7 @@ require("reshape2")
 require("ggplot2")
 require("dplyr")
 
-CGI.limdat.CC.logit<-logit(CGI.limdat.CC,percents=FALSE,adjust=0.025)
+CGI.limdat.CC.logit<-logit(CGI.limdat.CC,percents=FALSE,adjust=0.025) 
 x1<-PCA(CGI.limdat.CC,graph=FALSE)
 
 pdf(paste0(bedshort,".CGI.limdat.CC.PCA.pdf"),paper="a4",bg="white") 

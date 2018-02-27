@@ -15,7 +15,7 @@ import collections as cll
 
 def DMR_metilene(ii,sampleInfo,outfile,nthreads,metipath,my_session,logobject):
     outdir=os.path.dirname(outfile)
-    met_cmd=os.path.join(metipath,'metilene')+ ' -a ' + list(set(pd.read_table(sampleInfo)['Group']))[0] + ' -b ' + list(set(pd.read_table(sampleInfo)['Group']))[1] + ' -t ' + str(nthreads) + ' ' + ii + ' | sort -k 1,1 -k2,2n > ' + outfile + 
+    met_cmd=os.path.join(metipath,'metilene')+ ' -a ' + list(set(pd.read_table(sampleInfo)['Group']))[0] + ' -b ' + list(set(pd.read_table(sampleInfo)['Group']))[1] + ' -t ' + str(nthreads) + ' ' + ii + ' | sort -k 1,1 -k2,2n > ' + outfile + ';sleep 300'
     logobject.info(met_cmd)
     with open(os.path.join(outdir,"logs","DMR.metilene.out" ),'w') as stdoutF, open(os.path.join(outdir,"logs","DMR.metilene.err"),'w') as stderrF:
         try:
