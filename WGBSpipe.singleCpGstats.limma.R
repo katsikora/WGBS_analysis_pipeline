@@ -40,15 +40,14 @@ limdat<-limdat[,c(1,match(sampleInfo$SampleID,colnames(limdat))),with=FALSE]
 
 
 limdat.LG<-limdat 
-if(unique(grepl("MethylDackel",mdir))){
-    limdat.LG[,2:ncol(limdat.LG)]<-limdat[,2:ncol(limdat),with=FALSE]/100
-}
+#if(unique(grepl("MethylDackel",mdir))){
+#    limdat.LG[,2:ncol(limdat.LG)]<-limdat[,2:ncol(limdat),with=FALSE]/100
+#}
 if("Merge" %in% colnames(sampleInfo)){
-    if(unique(grepl("methylCtools",mdir))){ colnames(limdat.LG)[2:ncol(limdat.LG)] <- gsub(".CG.call","",colnames(limdat.LG)[2:ncol(limdat.LG)])}
     colnames(limdat.LG)[2:ncol(limdat.LG)]<-sampleInfo$PlottingID[match(colnames(limdat.LG[,2:ncol(limdat.LG)]),sampleInfo$Merge)]}else{colnames(limdat.LG)[2:ncol(limdat.LG)]<-sampleInfo$PlottingID[match(colnames(limdat.LG[,2:ncol(limdat.LG)]),sampleInfo$SampleID)]}
-
+limdat.LG[,2:ncol(limdat.LG)]<-limdat.LG[,2:ncol(limdat.LG)]/100
 limdat.LG.CC<-limdat.LG[complete.cases(limdat.LG),] 
-
+limdat.LG.CC[,2:ncol(limdat.LG)]<-limdat.LG.CC[,2:ncol(limdat.LG)]
 
 limdat.LG.CC.logit<-logit(limdat.LG.CC[,2:ncol(limdat.LG.CC),with=FALSE],percents=FALSE,adjust=0.025)
 rownames(limdat.LG.CC.logit)<-limdat.LG.CC$ms

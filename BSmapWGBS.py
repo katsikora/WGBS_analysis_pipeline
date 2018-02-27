@@ -25,118 +25,13 @@ def zeroFile(file):
             # change the time of the file back to what it was
             os.utime(file,(timeInfo.st_atime, timeInfo.st_mtime))
 
-def methCT_convert_reads(INfile1,INfile2,mCTpath,readout,my_session,logobject):
-    read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile1))
-    R12out=os.path.join(readout,read_root) + '_R12.conv.fastq.gz'
-    logobject.info('CT converting the reads')
-    cmd_fqconv= os.path.join(mCTpath,'methylCtools') + ' fqconv -1 ' + INfile1 + ' -2 ' + INfile2 + ' - | gzip -c > ' + R12out
-    logobject.info(cmd_fqconv)
-    with open(os.path.join(readout,"logs","%s.fqconv.out.log" % read_root),'w') as stdoutF, open(os.path.join(readout,"logs","%s.fqconv.err.log" % read_root),'w') as stderrF:
-        try:
-            stdout_res, stderr_res  = run_job(cmd_str           = cmd_fqconv,
-                                          job_name          = 'fqconv',
-                                          logger            = logobject,
-                                          drmaa_session     = my_session,
-                                          run_locally       = False,
-                                          working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo')
-            stdoutF.write("".join(stdout_res))
-            stderrF.write("".join(stderr_res))
-
-        # relay all the stdout, stderr, drmaa output to diagnose failures
-        except Exception as err:
-            logobject.error("Convert_reads error: %s" % err)
-            raise
-        else:
-            logobject.info('CT converting complete')
-    return
-
-def methCT_map_reads(INfile,bwapath,sampath,bamoutDir,refpathBS,nthreads,my_session,logobject):
-    read_root=re.sub('_R12.conv.fastq.gz','',os.path.basename(INfile))
-    outBam=os.path.join(bamoutDir,read_root)+'.conv.bam'
-    #get read group ID string from read name
-    with gzip.open(INfile, 'r') as f:
-        file_content = f.readline().strip()
-    PL=re.sub('@','',file_content).split(":")[0]
-    PU=re.sub('@','',file_content).split(":")[2]
-    RG='@RG"\t"ID:1"\t"SM:'+read_root+'"\t"LB:'+read_root+'"\t"PL:'+PL+'"\t"PU:'+PU
-    ##-M option is interfering with some positional arguments and the index cannot be located
-    mapcmd= os.path.join(bwapath,'bwa') + ' mem  -p -t ' + str(nthreads) + ' -R ' + RG + ' ' + refpathBS + ' ' + INfile + ' | ' + os.path.join(sampath,'samtools') + ' view -Sb - > ' + outBam
-    logobject.info(mapcmd)
-    with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
-        try:
-            stdout_res, stderr_res  = run_job(cmd_str           = mapcmd,
-                                          job_name          = 'BSmap',
-                                          logger            = logobject,
-                                          drmaa_session     = my_session,
-                                          run_locally       = False,
-                                          working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
-            stdoutF.write("".join(stdout_res))
-            stderrF.write("".join(stderr_res))
-
-        # relay all the stdout, stderr, drmaa output to diagnose failures
-        except Exception as err:
-            logobject.error("Map_reads error: %s" % err)
-            raise
-        else:
-            logobject.info('Mapping complete')
-            #zeroFile(INfile)
-    return
-
-def methCT_bcov_bam(INfile,mCTpath,sampath,bamoutDir,nthreads,my_session,logobject):
-    outBam=re.sub('.conv.bam','.bconv.s.bam',INfile)
-    read_root=re.sub('.conv.bam','',os.path.basename(INfile))
-    cmd_bconv= os.path.join(mCTpath,'methylCtools') + ' bconv ' + INfile + ' - | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 6G -@ ' + str(nthreads)  + ' -o ' + outBam 
-    logobject.info(cmd_bconv)
-    with open(os.path.join(bamoutDir,"logs","%s.bconv.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.bconv.err.log" % read_root),'w') as stderrF:
-        try:
-            stdout_res, stderr_res  = run_job(cmd_str       = cmd_bconv,
-                                          job_name          = 'bconv',
-                                          logger            = logobject,
-                                          drmaa_session     = my_session,
-                                          run_locally       = False,
-                                          working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
-            stdoutF.write("".join(stdout_res))
-            stderrF.write("".join(stderr_res))
-
-        # relay all the stdout, stderr, drmaa output to diagnose failures
-        except Exception as err:
-            logobject.error("Backconvert_bam error: %s" % err)
-            raise
-        else:
-            logobject.info('Backconverting complete')
-            zeroFile(INfile)
-    return
-
-def Bism_map_reads(INfile1,INfile2,bismpath,bamoutDir,refpathBS,nthreads,my_session,logobject):
-    read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile1))
-    mapcmd= os.path.join(bismpath,'bismark') + ' -p ' + str(nthreads) + ' --dovetail --temp_dir /data/extended --path_to_bowtie /package/bowtie2-2.2.8 --output_dir ' + bamoutDir + ' --basename ' + read_root + ' --genome_folder ' + BSrefpath + ' -1 ' + INfile1 + ' -2 ' + INfile2
-    logobject.info(mapcmd)
-    with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
-        try:
-            stdout_res, stderr_res  = run_job(cmd_str       = mapcmd,
-                                          job_name          = 'BSmap',
-                                          logger            = logobject,
-                                          drmaa_session     = my_session,
-                                          run_locally       = False,
-                                          working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
-            stdoutF.write("".join(stdout_res))
-            stderrF.write("".join(stderr_res))
-
-        # relay all the stdout, stderr, drmaa output to diagnose failures
-        except Exception as err:
-            logobject.error("Map_reads error: %s" % err)
-            raise
-        else:
-            logobject.info('Mapping complete')
-    return
-
 def bMeth_map_reads(INfile1,INfile2,outBam,bmethpath,sampath,bamoutDir,refpathBS,nthreads,my_session,logobject):
     read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile1))
-    mapcmd='python ' + os.path.join(bmethpath,'bwameth.py') + ' --threads ' + str(nthreads)  + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 6G -@ ' + str(nthreads)  + ' -o ' + outBam
+    # There no point in using more than a few sort threads, it just uses excess memory
+    sortThreads = nthreads
+    if nthreads > 4:
+        sortThreads = 4
+    mapcmd=bmethpath + ' bwameth.py --threads ' + str(nthreads)  + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 3G -@ ' + str(sortThreads)  + ' -o ' + outBam
     logobject.info(mapcmd)
     with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
         try:
@@ -146,7 +41,7 @@ def bMeth_map_reads(INfile1,INfile2,outBam,bmethpath,sampath,bamoutDir,refpathBS
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
+                                          job_other_options = '-p bioinfo --mem-per-cpu=10000 --mincpus='+str(nthreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
@@ -220,7 +115,7 @@ def BS_rm_dupes(INfile,OUTfile,Picpath,bamoutDir,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo')
+                                          job_other_options = '-p bioinfo --mem-per-cpu=20000')
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
@@ -249,7 +144,7 @@ def BS_add_RGi(INfile,OUTfile,Picpath,bamoutDir,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo')
+                                          job_other_options = '-p bioinfo ')
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
