@@ -176,7 +176,7 @@ def BS_flagstat(INfile,OUTfile,sampath,outdir,my_session,logobject):
  
 def BS_QC_rep(Rpath,QCdir,logobject):
     shutil.copyfile("{}/WGBS_QC_report_template.Rmd".format(os.path.dirname(os.path.realpath(__file__))), os.path.join(QCdir, "WGBS_QC_report_template.Rmd"))
-    cmd = os.path.join(Rpath, 'Rscript -e "rmarkdown::render(\'{0}/WGBS_QC_report_template.Rmd\', params=list(QCdir=\'"' + QCdir +'"\' ), output_file =\'"'+ os.path.join(QCdir,'QC_report.pdf"\'')+')"')
+    cmd = os.path.join(Rpath, 'Rscript -e "rmarkdown::render(\''+os.path.join(QCdir, "WGBS_QC_report_template.Rmd")+'\', params=list(QCdir=\'"' + QCdir +'"\' ), output_file =\'"'+ os.path.join(QCdir,'QC_report.pdf"\'')+')"')
     logobject.info(cmd)
     logobject.debug(subprocess.check_output(cmd,shell=True))
     logobject.info('Generating QC report complete')

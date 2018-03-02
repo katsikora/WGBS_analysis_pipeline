@@ -112,7 +112,7 @@ def cut_reads_user(INfile1,INfile2,OUTfile1,OUTfile2,cutpath,my_session,cutout,l
                                              drmaa_session = my_session,
                                              run_locally = False,
                                              working_directory = os.getcwd(),
-                                             job_other_options = '-p bioinfo --mincpus={}'.format(nThreads))
+                                             job_other_options = '-p bioinfo --nodes=1 --mincpus={}'.format(nThreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
@@ -133,7 +133,7 @@ def post_trim_fqc(INfile1,INfile2,fqcout,FQCpath,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus=8')
+                                          job_other_options = '-p bioinfo --nodes=1 --mincpus=8')
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 

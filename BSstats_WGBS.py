@@ -13,8 +13,8 @@ import collections as cll
 
 #####DEFINITIONS#################################################
 
-def single_CpG_limma(ii,sampleInfo,outdir,my_session,logobject):
-    Rstat_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v1.0.0/WGBSpipe.singleCpGstats.limma.R ' + outdir + ' ' + sampleInfo + ' ' + ii +';sleep 300'
+def single_CpG_limma(ii,sampleInfo,outdir,Rpath,pipev,my_session,logobject):
+    Rstat_cmd=os.path.join(Rpath,'Rscript') +' --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/' + pipev + '/WGBSpipe.singleCpGstats.limma.R ' + outdir + ' ' + sampleInfo + ' ' + ii +';sleep 300'
     logobject.info(Rstat_cmd)
     with open(os.path.join(outdir,"logs","singleCpG_stats.out" ),'w') as stdoutF, open(os.path.join(outdir,"logs","singleCpG_stats.err"),'w') as stderrF:
         try:
@@ -36,8 +36,8 @@ def single_CpG_limma(ii,sampleInfo,outdir,my_session,logobject):
             logobject.info('Single CpG stats calculation complete')
     return
 
-def int_stats_limma(ii,bedList,sampleSheet,outdir,my_session,logobject):
-    cmd_all=['/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v1.0.0/WGBSpipe.interval_stats.limma.R ' + outdir + ' ' + li + ' ' + ii + ' ' + sampleSheet for li in bedList]
+def int_stats_limma(ii,bedList,sampleSheet,outdir,Rpath,pipev,my_session,logobject):
+    cmd_all=[os.path.join(Rpath,'Rscript') +' --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/' + pipev + '/WGBSpipe.interval_stats.limma.R ' + outdir + ' ' + li + ' ' + ii + ' ' + sampleSheet for li in bedList]
     cmd_all_str=';'.join(cmd_all)
     logobject.info(cmd_all_str)
     with open(os.path.join(outdir,"logs","interval_stats.out" ),'w') as stdoutF, open(os.path.join(outdir,"logs","interval_stats.err"),'w') as stderrF:

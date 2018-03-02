@@ -41,7 +41,7 @@ def bMeth_map_reads(INfile1,INfile2,outBam,bmethpath,sampath,bamoutDir,refpathBS
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mem-per-cpu=3000 --mincpus='+str(nthreads))
+                                          job_other_options = '-p bioinfo --mem-per-cpu=10000 --nodes=1 --mincpus='+str(nthreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 

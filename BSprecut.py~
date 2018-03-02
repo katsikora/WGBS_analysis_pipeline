@@ -89,7 +89,7 @@ def cut_reads_auto(INfile1,INfile2,OUTfile1,OUTfile2,cutThdR1,cutThdR2,cutpath,m
             raise
     return
 
-def cut_reads(INfile1,INfile2,OUTfile1,OUTfile2,cutpath,my_session,cutout,logobject, args):
+def cut_reads_user(INfile1,INfile2,OUTfile1,OUTfile2,cutpath,my_session,cutout,logobject, args):
     read_root = os.path.basename(INfile1)[:-12]
     adapterSeq = "AGATCGGAAGAGC"
     if args.nextera:
@@ -112,7 +112,7 @@ def cut_reads(INfile1,INfile2,OUTfile1,OUTfile2,cutpath,my_session,cutout,logobj
                                              drmaa_session = my_session,
                                              run_locally = False,
                                              working_directory = os.getcwd(),
-                                             job_other_options = '-p bioinfo --mincpus={}'.format(nThreads))
+                                             job_other_options = '-p bioinfo --nodes=1 --mincpus={}'.format(nThreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 

@@ -1,3 +1,6 @@
+__version__="v1.0.1"
+
+
 import os
 import sys
 import time
@@ -29,7 +32,7 @@ from ruffus.drmaa_wrapper import run_job, run_job_using_drmaa, error_drmaa_job
 from PIL import Image
 import string
 
-parser = argparse.ArgumentParser(prog="methPipe", version="1.0.0", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(prog="methPipe", version="1.0.1", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-ri", "--readIn", dest="readdir", action="store", default=False, help="input read folder")
 parser.add_argument("-qi", "--fqcIn", dest="fqcdir", action="store", default=False, help="folder with fastqc.zip results for raw reads")
 parser.add_argument("-g", "--ref", dest="refpath", action="store", default=False, help="path to indexed reference genome")
@@ -48,10 +51,11 @@ parser.add_argument("--trimOtherArgs", default="", help="Other arguments you wou
 parser.add_argument("-cr", "--convRef", dest="convRef", action="store_true", help="BS-convert reference genome")
 parser.add_argument('--mbias', dest="mbias_ignore",action="store",default="auto",help="number of nucleotides with mbias to ignore during methylation extraction")
 parser.add_argument("--touchOnly", dest="touchOnly", action="store_true", help="only touch files")
-parser.add_argument("--target_tasks", dest="target_tasks", action="store",default=[], help="target tasks")
-parser.add_argument("--forcedtorun_tasks", dest="forcedtorun_tasks", action="store",default=[], help="forced to run tasks")
+parser.add_argument("--target_tasks", dest="target_tasks", action="append",default=[], help="target tasks")
+parser.add_argument("--forcedtorun_tasks", dest="forcedtorun_tasks", action="append",default=[], help="forced to run tasks")
 
 args = parser.parse_args()
+pipev=__version__
 
 #setup central working directory
 wdir=args.wdir
@@ -74,7 +78,7 @@ import drmaa
 mySession=drmaa.Session()
 mySession.initialize()
 
-
+logger.info('Pipeline version is '+pipev)
 logger.info('Working directory is : ' + wdir)
 logger.info(args)
 
@@ -428,7 +432,7 @@ def CpG_filt(input_file,output_file):
     ii = input_file
     oo = output_file
     from BSmethXT_WGBS import filt_POM
-    filt_POM(ii,bedpath,mextout,mySession,logger,args.blackList)    
+    filt_POM(ii,bedpath,mextout,Rpath,pipev,mySession,logger,args.blackList)    
 #########################################################################################################    
 
      
@@ -444,7 +448,7 @@ if args.sampleInfo :
         ii = input_files[0]
         oo = output_file
         from BSstats_WGBS import single_CpG_limma
-        single_CpG_limma(os.path.dirname(ii),args.sampleInfo,CpGstat_out,mySession,logger)
+        single_CpG_limma(os.path.dirname(ii),args.sampleInfo,CpGstat_out,Rpath,pipev,mySession,logger)
 ########################################################################################################
         
     
@@ -458,7 +462,7 @@ if ( args.intList and args.sampleInfo ):
         ii = os.path.join(CpGstat_out,input_files[1])
         oo = output_files
         from BSstats_WGBS import int_stats_limma
-        int_stats_limma(ii,args.intList,args.sampleInfo,intStat_out,mySession,logger)
+        int_stats_limma(ii,args.intList,args.sampleInfo,intStat_out,Rpath,pipev,mySession,logger)
 #####################################################################################################
         
 ####RUN DMR calling ################################################################################
@@ -478,7 +482,7 @@ if args.sampleInfo :
         ii2 = input_files[1][1]
         oo = output_file
         from BS_DMR_WGBS import clean_up_metilene
-        clean_up_metilene(ii1,ii2,args.sampleInfo,DMRout,mySession,logger)
+        clean_up_metilene(ii1,ii2,args.sampleInfo,DMRout,Rpath,pipev,mySession,logger)
 ###################################################################################################
 
 #####main

@@ -68,7 +68,7 @@ def methXT_POM(INfile,QCdir,OUTpfx,refG,POMpath,mextDir,mbias_ignore,nthreads,my
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mincpus='+str(nthreads))
+                                          job_other_options = '-p bioinfo --nodes=1 --mincpus='+str(nthreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 
@@ -80,9 +80,9 @@ def methXT_POM(INfile,QCdir,OUTpfx,refG,POMpath,mextDir,mbias_ignore,nthreads,my
             logobject.info('Methylation extraction complete')
     return
    
-def filt_POM(INfile,bedpath,mextDir,my_session,logobject,blackListF=None):
+def filt_POM(INfile,bedpath,mextDir,Rpath,pipev,my_session,logobject,blackListF=None):
     read_root=re.sub('_CpG.bedGraph','',os.path.basename(INfile))
-    Rfilt_cmd='/package/R-3.3.1/bin/Rscript --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/v1.0.0/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
+    Rfilt_cmd=os.path.join(Rpath,'Rscript') +' --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/' + pipev + '/WGBSpipe.POM.filt.R ' + mextDir + ' ' + INfile 
     if blackListF is None:
         mv_cmd='mv -v '+ re.sub('_CpG.bedGraph','.CpG.filt.bed',INfile) + ' ' + re.sub('_CpG.bedGraph','.CpG.filt2.bed',INfile) + ';sleep 300'
         cmd_all=';'.join([Rfilt_cmd,mv_cmd])
