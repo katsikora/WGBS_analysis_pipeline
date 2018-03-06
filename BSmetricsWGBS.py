@@ -132,7 +132,7 @@ def BS_Mbias(INfile,OUTfile,POMpath,refG,metDir,nthreads,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --mem-per-cpu=3000 --nodes=1 --mincpus='+str(nthreads))
+                                          job_other_options = '-p bioinfo --mem-per-cpu=3000 --nodes=1=1 --mincpus='+str(nthreads))
             
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))

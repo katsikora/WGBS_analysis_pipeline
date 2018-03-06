@@ -68,7 +68,7 @@ def methXT_POM(INfile,QCdir,OUTpfx,refG,POMpath,mextDir,mbias_ignore,nthreads,my
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo --nodes=1 --mincpus='+str(nthreads))
+                                          job_other_options = '-p bioinfo --nodes=1=1 --mincpus='+str(nthreads))
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 

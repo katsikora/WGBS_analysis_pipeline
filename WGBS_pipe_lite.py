@@ -1,4 +1,4 @@
-__version__="v1.0.1"
+__version__="v1.1.0"
 
 
 import os
@@ -32,7 +32,7 @@ from ruffus.drmaa_wrapper import run_job, run_job_using_drmaa, error_drmaa_job
 from PIL import Image
 import string
 
-parser = argparse.ArgumentParser(prog="methPipe", version="1.0.1", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(prog="methPipe", version="1.1.0", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-ri", "--readIn", dest="readdir", action="store", default=False, help="input read folder")
 parser.add_argument("-qi", "--fqcIn", dest="fqcdir", action="store", default=False, help="folder with fastqc.zip results for raw reads")
 parser.add_argument("-g", "--ref", dest="refpath", action="store", default=False, help="path to indexed reference genome")
@@ -135,20 +135,19 @@ logger.debug('Convert genome? ' + str(args.convRef))
 
 ##################PATHS TO EXECUTABLES###############################################################
 FQCpath='/package/FastQC-0.11.3'
-cutpath='/package/cutadapt-1.9.1/bin'
+#cutpath='/package/cutadapt-1.9.1/bin'
+cutpath='module load cutadapt/1.16 ;'
 mCTpath='/data/manke/repository/scripts/DNA_methylation/methylCtools'
 tabpath='/package/tabix-1.2.1'
 bwapath='/package/bwa-0.7.4/bin'
-bismpath='/data/manke/repository/scripts/DNA_methylation/Bismark-master'
-BTpath='/package/bowtie2-2.2.8/'
 #bmethpath='/data/manke/repository/scripts/DNA_methylation/bwa-meth-master_2016'
 bmethpath='module load bwameth; '
 sampath='/package/samtools-1.3/bin'
-Picpath='/package/picard-tools-1.136'
+#Picpath='/package/picard-tools-1.136'
+sambambapath='module load sambamba/0.6.6;'
 GATKpath='/package/GenomeAnalysisTK-3.5'
 POMpath='/package/MethylDackel-0.3.0/bin'
 bedpath='/package/bedtools2-2.25.0/bin'
-BisSNPpath='/data/manke/repository/scripts/DNA_methylation/BisSNP-0.82.2.jar'
 metipath='/data/manke/repository/scripts/DNA_methylation/metilene_v0.2-6'
 Rpath='/package/R-3.3.1/bin'
 
@@ -216,7 +215,7 @@ if args.trimReads == 'auto':
             ct2=fields[1]
     
         from BSprecut import cut_reads_auto
-        cut_reads_auto(ii1,ii2,oo1,oo2,ct1,ct2,cutpath,mySession,cutout,logger)
+        cut_reads_auto(ii1,ii2,oo1,oo2,ct1,ct2,cutpath,mySession,cutout,logger,args)
 
 elif args.trimReads=='user':
     @mkdir(cutout,os.path.join(cutout,'logs'))
@@ -307,19 +306,13 @@ def index_bam(input_file,output_file):
     oo = output_file  
     from BSmapWGBS import BS_index_bam
     BS_index_bam(ii,sampath,bamoutO,mySession,logger)
-@transform(index_bam,suffix('.sorted.bam.bai'),'.RGi.bam') #for compatibility with GATK; depth of coverage
-def add_ReadGroupInfo(input_file,output_file):
-    ii=re.sub('.bai','',input_file)
-    oo=output_file
-    from BSmapWGBS import BS_add_RGi
-    BS_add_RGi(ii,oo,Picpath,bamoutO,mySession,logger)
         
-@transform(add_ReadGroupInfo,suffix('.RGi.bam'),'.PCRrm.bam')
+@transform(index_bam,suffix('.sorted.bam.bai'),'.PCRrm.bam')
 def PCRdup_rm(input_file,output_file):
     ii=input_file
     oo=output_file
     from BSmapWGBS import BS_rm_dupes
-    BS_rm_dupes(ii,oo,Picpath,bamoutO,mySession,logger)
+    BS_rm_dupes(ii,oo,sambambapath,bamoutO,args.nthreads,mySession,logger)
 
 ######################################################################################################################  
 #RUN VARIOUS COVERAGE AND QUALITY METRICS#######################################################################
