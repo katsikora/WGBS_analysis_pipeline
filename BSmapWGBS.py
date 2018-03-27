@@ -6,6 +6,7 @@ import logging
 from ruffus.drmaa_wrapper import run_job, error_drmaa_job
 import gzip
 import subprocess
+import tempfile
 
 #####DEFINITIONS#################################################
 
@@ -36,7 +37,7 @@ def bMeth_map_reads(INfile1,INfile2,outBam,bmethpath,sampath,bamoutDir,refpathBS
     sortThreads = nthreads
     if nthreads > 4:
         sortThreads = 4
-    mapcmd=bmethpath + ' bwameth.py --threads ' + str(nthreads)  + ' --read-group '+ RG + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + os.path.join('/data/extended',read_root) + ' -m 3G -@ ' + str(sortThreads)  + ' -o ' + outBam
+    mapcmd=bmethpath + ' bwameth.py --threads ' + str(nthreads)  + ' --read-group '+ RG + ' --reference ' + refpathBS + ' ' + INfile1 + ' ' + INfile2 + ' | ' + os.path.join(sampath,'samtools') + ' sort -T ' + tempfile.mkdtemp(suffix='',prefix=read_root,dir='/data/extended') + ' -m 3G -@ ' + str(sortThreads)  + ' -o ' + outBam
     logobject.info(mapcmd)
     with open(os.path.join(bamoutDir,"logs","%s.readmap.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.readmap.err.log" % read_root),'w') as stderrF:
         try:
@@ -86,7 +87,7 @@ def BS_index_bam(INfile,sampath,bamoutDir,my_session,logobject):
 def BS_rm_dupes(INfile,OUTfile,sbpath,bamoutDir,nthreads,my_session,logobject):
     read_root=re.sub('.bam.bai','',os.path.basename(INfile))
     INfile0=os.path.join(bamoutDir,read_root)+'.bam'
-    rmD_cmd=sbpath + 'sambamba_v0.6.6 markdup --remove-duplicates -t ' + str(nthreads) + ' --tmpdir /data/extended ' + INfile0 + ' ' + OUTfile + ';sleep 300'
+    rmD_cmd=sbpath + 'sambamba_v0.6.6 markdup --remove-duplicates -t ' + str(nthreads) + ' --tmpdir ' + tempfile.mkdtemp(suffix='',prefix='',dir='/data/extended') +' ' + INfile0 + ' ' + OUTfile + ';sleep 300'
     logobject.info(rmD_cmd)
     with open(os.path.join(bamoutDir,"logs","%s.rmDupes.out.log" % read_root),'w') as stdoutF, open(os.path.join(bamoutDir,"logs","%s.rmDupes.err.log" % read_root),'w') as stderrF:
         try:
@@ -106,7 +107,7 @@ def BS_rm_dupes(INfile,OUTfile,sbpath,bamoutDir,nthreads,my_session,logobject):
             raise
         else:
             logobject.info('PCR duplicate removal complete')
-            zeroFile(INfile)
+            zeroFile(INfile0)
     return
 
 

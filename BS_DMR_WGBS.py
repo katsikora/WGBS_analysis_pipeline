@@ -38,8 +38,8 @@ def DMR_metilene(ii,sampleInfo,outfile,nthreads,metipath,my_session,logobject):
     return
 
 
-def clean_up_metilene(metilene_out,CpG_stats_out,sampleInfo,outdir,Rpath,pipev,my_session,logobject):
-    cmd=os.path.join(Rpath,'Rscript') +' --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/' + pipev + '/WGBSpipe.metilene_stats.limma.R ' + outdir + ' ' + metilene_out + ' ' + CpG_stats_out +' ' + sampleInfo
+def clean_up_metilene(metilene_out,CpG_stats_out,auxList,refG,sampleInfo,outdir,Rpath,Rlib,bedpath,pipev,my_session,logobject):
+    cmd=os.path.join(Rpath,'Rscript') +' --no-save --no-restore /data/manke/repository/scripts/DNA_methylation/WGBS_pipe/' + pipev + '/WGBSpipe.metilene_stats.limma.R ' + outdir + ' ' + metilene_out +' ' + auxList + ' ' + CpG_stats_out +' ' + sampleInfo + ' ' + refG + ' "' + bedpath+'" ' + Rlib
     logobject.info(cmd)
     with open(os.path.join(outdir,"logs","metilene.cleanup.out" ),'w') as stdoutF, open(os.path.join(outdir,"logs","metilene.cleanup.err"),'w') as stderrF:
         try:

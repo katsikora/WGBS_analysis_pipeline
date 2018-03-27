@@ -1,4 +1,4 @@
-__version__="v1.1.0"
+__version__="v1.2.0"
 
 
 import os
@@ -32,7 +32,7 @@ from ruffus.drmaa_wrapper import run_job, run_job_using_drmaa, error_drmaa_job
 from PIL import Image
 import string
 
-parser = argparse.ArgumentParser(prog="methPipe", version="1.1.0", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(prog="methPipe", version="1.2.0", description="runs complete CpG methylation pipeline", formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-ri", "--readIn", dest="readdir", action="store", default=False, help="input read folder")
 parser.add_argument("-qi", "--fqcIn", dest="fqcdir", action="store", default=False, help="folder with fastqc.zip results for raw reads")
 parser.add_argument("-g", "--ref", dest="refpath", action="store", default=False, help="path to indexed reference genome")
@@ -147,9 +147,10 @@ sampath='/package/samtools-1.3/bin'
 sambambapath='module load sambamba/0.6.6;'
 GATKpath='/package/GenomeAnalysisTK-3.5'
 POMpath='/package/MethylDackel-0.3.0/bin'
-bedpath='/package/bedtools2-2.25.0/bin'
+bedpath='module load bedtools2/2.27.0;'
 metipath='/data/manke/repository/scripts/DNA_methylation/metilene_v0.2-6'
 Rpath='/package/R-3.3.1/bin'
+Rlib='/data/manke/repository/scripts/DNA_methylation/Rlibs.3.3.1'
 
 ######################################################################################################
 
@@ -215,7 +216,7 @@ if args.trimReads == 'auto':
             ct2=fields[1]
     
         from BSprecut import cut_reads_auto
-        cut_reads_auto(ii1,ii2,oo1,oo2,ct1,ct2,cutpath,mySession,cutout,logger)
+        cut_reads_auto(ii1,ii2,oo1,oo2,ct1,ct2,cutpath,mySession,cutout,logger,args)
 
 elif args.trimReads=='user':
     @mkdir(cutout,os.path.join(cutout,'logs'))
@@ -425,7 +426,7 @@ def CpG_filt(input_file,output_file):
     ii = input_file
     oo = output_file
     from BSmethXT_WGBS import filt_POM
-    filt_POM(ii,bedpath,mextout,Rpath,pipev,mySession,logger,args.blackList)    
+    filt_POM(ii,bedpath,mextout,Rpath,Rlib,pipev,mySession,logger,args.blackList)    
 #########################################################################################################    
 
      
@@ -441,21 +442,35 @@ if args.sampleInfo :
         ii = input_files[0]
         oo = output_file
         from BSstats_WGBS import single_CpG_limma
-        single_CpG_limma(os.path.dirname(ii),args.sampleInfo,CpGstat_out,Rpath,pipev,mySession,logger)
+        single_CpG_limma(os.path.dirname(ii),args.sampleInfo,CpGstat_out,Rpath,Rlib,pipev,mySession,logger)
 ########################################################################################################
         
     
 ####RUN INTERVAL AGGREGATE STATISTICS IN R ####################################################
+###prepare bed files with all reference CpG positions within the genomic intervals
+if (args.intList):
+    int_dest=[re.sub('.bed','.CpGlist.bed',os.path.basename(x)) for x in args.intList]
+    @follows(get_ran_CG)
+    @transform(refG,suffix('.fa'),int_dest,output_dir=auxdir)
+    def get_CG_per_int(input_file,output_files):
+        ii=input_file
+        oo=output_files
+        from BSstats_WGBS import mCT_get_CpGxInt
+        mCT_get_CpGxInt(ii,oo,refG,args.intList,auxdir,bedpath,mySession,logger)
+
+
 if ( args.intList and args.sampleInfo ):
     int_dest=[re.sub('.bed','.aggCpG.RData',os.path.basename(x)) for x in args.intList]
     intStat_out=os.path.join(wdir,'aggregate_stats_limma')
     @mkdir(intStat_out,os.path.join(intStat_out,'logs'))
+    @follows(get_CG_per_int)
     @transform(CpG_stats,suffix('.RData'),int_dest,output_dir=intStat_out)
     def intAgg_stats(input_files,output_files):
         ii = os.path.join(CpGstat_out,input_files[1])
         oo = output_files
+        auxList=[os.path.join(auxdir,re.sub('.fa',re.sub('.bed','.CpGlist.bed',os.path.basename(x)),os.path.basename(refG))) for x in args.intList]
         from BSstats_WGBS import int_stats_limma
-        int_stats_limma(ii,args.intList,args.sampleInfo,intStat_out,Rpath,pipev,mySession,logger)
+        int_stats_limma(ii,args.intList,auxList,args.sampleInfo,intStat_out,Rpath,pipev,mySession,logger)
 #####################################################################################################
         
 ####RUN DMR calling ################################################################################
@@ -468,14 +483,24 @@ if args.sampleInfo :
         oo = output_file
         from BS_DMR_WGBS import DMR_metilene
         DMR_metilene(ii,args.sampleInfo,oo,args.nthreads,metipath,mySession,logger)
+    @follows(run_metilene)
+    @transform(refG,suffix('.fa'),'.metilene.CpGlist.bed',output_dir=auxdir)
+    def get_CG_metilene(input_file,output_file):
+        ii=input_file
+        oo=output_file
+        from BSstats_WGBS import mCT_get_CpGxInt
+        mCT_get_CpGxInt(ii,[oo],refG,[os.path.join(DMRout,'singleCpG.metilene.bed')],auxdir,bedpath,mySession,logger)
+
     os.chdir(CpGstat_out)
-    @merge(input=[run_metilene,CpG_stats],output=os.path.join(DMRout,"singleCpG.metilene.limma.bed"))
-    def cleanup_metilene (input_files,output_file):
+    @follows(get_CG_metilene)
+    @merge(input=[run_metilene,CpG_stats],output=[os.path.join(DMRout,"singleCpG.metilene.limma.bed"),os.path.join(DMRout,"metilene.limma.annotated.txt")])
+    def cleanup_metilene (input_files,output_files):
         ii1 = input_files[0]
         ii2 = input_files[1][1]
-        oo = output_file
+        oo = output_files
+        auxList=os.path.join(auxdir,re.sub('.fa','.metilene.CpGlist.bed',os.path.basename(refG)))
         from BS_DMR_WGBS import clean_up_metilene
-        clean_up_metilene(ii1,ii2,args.sampleInfo,DMRout,Rpath,pipev,mySession,logger)
+        clean_up_metilene(ii1,ii2,auxList,refG,args.sampleInfo,DMRout,Rpath,Rlib,bedpath,pipev,mySession,logger)
 ###################################################################################################
 
 #####main
