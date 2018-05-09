@@ -96,6 +96,31 @@ def BS_doc(INfile,OUTfileList,refG,auxdir,GATKpath,metDir,my_session,logobject):
             logobject.info('Depth of coverage calculation complete')
     return
 
+
+def BS_downsample_reads(numOut,nthreads,R1in,R1out,R2in,R2out,pipev,outdir,my_session,logobject):
+    read_root=os.path.basename(R1in)
+    cmd='/data/manke/repository/scripts/DNA_methylation/WGBS_pipe/'+ pipev + '/downsample_se_pe.sh ' + str(numOut) + ' ' + str(nthreads) + ' ' + R1in + ' ' + R1out + ' ' + R2in + ' ' + R2out
+    logobject.info(cmd)
+    with open(os.path.join(outdir,"logs","%s.downsample_reads.out.log" % read_root),'w') as stdoutF, open(os.path.join(outdir,"logs","%s.downsample_reads.err.log" % read_root),'w') as stderrF:
+        try:
+            stdout_res, stderr_res  = run_job(cmd_str       = cmd,
+                                          job_name          = 'r_dwnsmpl',
+                                          logger            = logobject,
+                                          drmaa_session     = my_session,
+                                          run_locally       = False,
+                                          working_directory = os.getcwd(),
+                                          job_other_options = '-p bioinfo ')
+            stdoutF.write("".join(stdout_res))
+            stderrF.write("".join(stderr_res))
+
+        # relay all the stdout, stderr, drmaa output to diagnose failures
+        except Exception as err:
+            logobject.error("Read downsampling error: %s" % err)
+            raise
+        else:
+            logobject.info('Read downsampling complete')
+    return
+
 def BS_conv_rate(ii1sub,oo,metDir,my_session,logobject):
     read_root=os.path.basename(ii1sub)
     CR_cmd='/data/manke/repository/scripts/DNA_methylation/DEEP_scripts/conversionRate_KS.sh '+ ii1sub + ' ' + oo
@@ -108,7 +133,7 @@ def BS_conv_rate(ii1sub,oo,metDir,my_session,logobject):
                                           drmaa_session     = my_session,
                                           run_locally       = False,
                                           working_directory = os.getcwd(),
-                                          job_other_options = '-p bioinfo')
+                                          job_other_options = '-p bioinfo --mem-per-cpu=6000')
             stdoutF.write("".join(stdout_res))
             stderrF.write("".join(stderr_res))
 

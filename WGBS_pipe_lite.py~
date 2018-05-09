@@ -1,4 +1,4 @@
-__version__="v1.2.0"
+__version__="v1.2.1"
 
 
 import os
@@ -319,6 +319,7 @@ def PCRdup_rm(input_file,output_file):
 #RUN VARIOUS COVERAGE AND QUALITY METRICS#######################################################################
 metout=os.path.join(wdir,'QC_metrics')
 auxdir=os.path.join(wdir,'aux_files')
+reads_downsampled=os.path.join(wdir,'downsampled_reads')
 
 #prepare bed file with random CpGs
 @mkdir(auxdir,os.path.join(auxdir,'logs'))
@@ -369,8 +370,18 @@ else:
         
 #conversion rate: currently from fastq, implement phiX control!
 if  args.trimReads :
+    @mkdir(reads_downsampled,os.path.join(reads_downsampled,'logs'))
+    @transform(trim_reads,suffix('_R1.fastq.gz'),['_R1.fastq.gz','_R2.fastq.gz'],output_dir=reads_downsampled) #down to 5mln reads
+    def dsmpl_reads(input_files,output_files):
+        ii1=input_files[0]
+        ii2=input_files[1]
+        oo1=output_files[0]
+        oo2=output_files[1]
+        from BSmetricsWGBS import BS_downsample_reads
+        BS_downsample_reads('5000000',args.nthreads,ii1,oo1,ii2,oo2,pipev,reads_downsampled,mySession,logger)
+
     @mkdir(metout,os.path.join(metout,'logs'))
-    @transform(trim_reads,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
+    @transform(dsmpl_reads,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
     def conv_rate(input_files,output_file):
         ii1=input_files[0]
         ii1sub=re.sub('_R1.fastq.gz','',ii1)
@@ -378,8 +389,17 @@ if  args.trimReads :
         from BSmetricsWGBS import BS_conv_rate
         BS_conv_rate(ii1sub,oo,metout,mySession,logger)
 else: 
+    @mkdir(reads_downsampled,os.path.join(reads_downsampled,'logs'))
+    @transform(IN_files,suffix('_R1.fastq.gz'),['_R1.fastq.gz','_R2.fastq.gz'],output_dir=reads_downsampled) #down to 5mln reads
+    def dsmpl_reads(input_files,output_files):
+        ii1=input_files[0]
+        ii2=input_files[1]
+        oo1=output_files[0]
+        oo2=output_files[1]
+        from BSmetricsWGBS import BS_downsample_reads
+        BS_downsample_reads('5000000',args.nthreads,ii1,oo1,ii2,oo2,pipev,reads_downsampled,mySession,logger)
     @mkdir(metout,os.path.join(metout,'logs'))
-    @transform(IN_files,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
+    @transform(dsmpl_reads,suffix('_R1.fastq.gz'),'.conv.rate.txt',output_dir=metout) #it's ok to have both reads summarized in 1 file
     def conv_rate(input_files,output_file):
         ii1=input_files[0][0]
         ii1sub=re.sub('_R1.fastq.gz','',ii1)
@@ -470,7 +490,7 @@ if ( args.intList and args.sampleInfo ):
         oo = output_files
         auxList=[os.path.join(auxdir,re.sub('.fa',re.sub('.bed','.CpGlist.bed',os.path.basename(x)),os.path.basename(refG))) for x in args.intList]
         from BSstats_WGBS import int_stats_limma
-        int_stats_limma(ii,args.intList,auxList,args.sampleInfo,intStat_out,Rpath,pipev,mySession,logger)
+        int_stats_limma(ii,args.intList,auxList,args.sampleInfo,intStat_out,Rpath,Rlib,pipev,mySession,logger)
 #####################################################################################################
         
 ####RUN DMR calling ################################################################################
